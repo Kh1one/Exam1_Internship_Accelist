@@ -21,7 +21,13 @@ namespace exam1.Controllers
 
             var data = await _services.DeleteBookedTicket(BookedTicketId, TicketCode, Quantity);
 
-            return Ok(data);
+            if (data.Status != 0)
+            {
+                data.Instance = HttpContext.Request.Path;
+                return Ok(data);
+            }
+
+            return Ok(data.Data);
         }
     }
 }

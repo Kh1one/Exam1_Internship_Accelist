@@ -13,6 +13,12 @@ builder.Host.UseSerilog((context, services, configuration) =>
                  .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
 );
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
+
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

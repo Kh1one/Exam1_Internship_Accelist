@@ -22,12 +22,28 @@ namespace exam1.Controllers
         {
             if (ModelState.IsValid == false)
             {
-                throw new ArgumentException("Failed to inserts due to invalid model state");
+                return Ok(new ServiceResponse<BookedTicketDetailRequestModel>
+                {
+                    Data = null,
+                    Title = "Invalid model state",
+                    Status = 400,
+                    Detail = "Failed to inserts due to invalid model state",
+                    Instance = HttpContext.Request.Path
+                });
+                //throw new ArgumentException("Failed to inserts due to invalid model state");
             }
+
+
 
             var data = await _services.InsertNewBookedTicket(request);
 
-            return Ok(data);
+            if (data.Status != 0)
+            {
+                data.Instance = HttpContext.Request.Path;
+                return Ok(data);
+            }
+
+            return Ok(data.Data);
         }
     }
 }

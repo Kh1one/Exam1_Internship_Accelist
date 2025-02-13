@@ -16,10 +16,13 @@ namespace exam1.services
             _db = db;
         }
 
-        public async Task<BookedTicketDetailSummaryResponseModel> InsertNewBookedTicket(List<BookedTicketDetailRequestModel> request)
+        public async Task<ServiceResponse<BookedTicketDetailSummaryResponseModel>> InsertNewBookedTicket(List<BookedTicketDetailRequestModel> request)
         {
             bool errorExists = false;//to keep track of an error, and used later to throw exception
-            string argumentExceptionString = string.Empty;//to give each error its own exception line
+            //to give each error its own exception line
+            string tempTitle = string.Empty;
+            int tempStatusCode = 0;
+            string tempDetail = string.Empty;
 
             //add new id in parent table
             //kalau insert detailnya error, nnt ini dihapus
@@ -37,25 +40,37 @@ namespace exam1.services
 
                 if (existingData == null)
                 {
-                    argumentExceptionString = $"Invalid TicketCode value: {item.TicketCode}. Value not found in database.";
+                    tempTitle = "Invalid TicketCode";
+                    tempStatusCode = 422;
+                    tempDetail = $"TicketCode value of '{item.TicketCode}' does not exist in database";
+                    //argumentExceptionString = $"Invalid TicketCode value: {item.TicketCode}. Value not found in database.";
                     errorExists = true;
                     break;
                 }
                 else if (existingData.Quota == 0)
                 {
-                    argumentExceptionString = $"Quota for TicketCode: {item.TicketCode} is 0.";
+                    tempTitle = "Available quota is 0";
+                    tempStatusCode = 403;
+                    tempDetail = $"Available quota for TicketCode: {item.TicketCode} is 0";
+                    //argumentExceptionString = $"Quota for TicketCode: {item.TicketCode} is 0.";
                     errorExists = true;
                     break;
                 }
                 else if (existingData.Quota < item.Quantity || item.Quantity == 0)
                 {
-                    argumentExceptionString = $"Invalid item Quantity value: {item.Quantity}. Incorrect value, quantity may be over quantity or 0.";
+                    tempTitle = "Wrong item quantity value";
+                    tempStatusCode = 403;
+                    tempDetail = $"Provided quantity of {item.Quantity} may be 0 or over available quota for TicketCode which is {item.TicketCode}";
+                    //argumentExceptionString = $"Invalid item Quantity value: {item.Quantity}. Incorrect value, quantity may be over quantity or 0.";
                     errorExists = true;
                     break;
                 }
                 else if (existingData.EventDate <= DateTime.Now)
                 {
-                    argumentExceptionString = $"Invalid dateTime value: {DateTime.Now}. Event date may have passed or is equal to current date.";
+                    tempTitle = "Invalid date";
+                    tempStatusCode = 403;
+                    tempDetail = $"Event's dateTime value of '{existingData.EventDate}' may have already passed or is equal to current date";
+                    //argumentExceptionString = $"Invalid dateTime value: {existingData.EventDate}. Event date may have passed or is equal to current date.";
                     errorExists = true;
                     break;
                 }
@@ -66,9 +81,16 @@ namespace exam1.services
                 _db.BookedTickets.Remove(newBookedTicketId);
                 await _db.SaveChangesAsync();
 
-                throw new ArgumentException(argumentExceptionString);
+                return new ServiceResponse<BookedTicketDetailSummaryResponseModel>
+                {
+                    Title = tempTitle,
+                    Status = tempStatusCode,
+                    Detail = tempDetail
+                };
+                //throw new ArgumentException(argumentExceptionString);
             }
 
+            //insert each request data
             foreach (var item in request)
             {
                 //update each availableTicket's quota
@@ -121,10 +143,13 @@ namespace exam1.services
             };
 
 
-            return finalOutput;
+            return new ServiceResponse<BookedTicketDetailSummaryResponseModel>
+            {
+                Data = finalOutput
+            };
         }
 
-        public async Task<List<GetBookedTicketCategoryModel>> GetBookedTicketDetails(int BookedTicketId)
+        public async Task<ServiceResponse<List<GetBookedTicketCategoryModel>>> GetBookedTicketDetails(int BookedTicketId)
         {
             var result = await GetBookedTicketDetailModels(BookedTicketId);
 
@@ -146,14 +171,23 @@ namespace exam1.services
                         }).ToList()
                     }).ToList();
 
-                return groupedResult;
+                return new ServiceResponse<List<GetBookedTicketCategoryModel>>
+                {
+                    Data = groupedResult
+                };
 
             }
 
-            throw new ArgumentException($"BookedTicketId of: {BookedTicketId} not found in database");
+            return new ServiceResponse<List<GetBookedTicketCategoryModel>>
+            {
+                Title = "BookedTicketId not found",
+                Status = 422,
+                Detail = $"BookedTicketId of: {BookedTicketId} does not exist in database"
+            };
+            //throw new ArgumentException($"BookedTicketId of: {BookedTicketId} not found in database");
         }
 
-        public async Task<List<UpdatedBookedTicketModel>> DeleteBookedTicket(int RequestBookedTicketId, string RequestTicketCode, int RequestQuantity)
+        public async Task<ServiceResponse<List<UpdatedBookedTicketModel>>> DeleteBookedTicket(int RequestBookedTicketId, string RequestTicketCode, int RequestQuantity)
         {
             var existingData = await _db.BookedTicketDetails
                 .Where(Q => Q.BookedTicketDetailId == RequestBookedTicketId)
@@ -162,7 +196,13 @@ namespace exam1.services
             //validate null in list of ticket data
             if (!existingData.Any())
             {
-                throw new ArgumentException($"BookedTicketId of: {RequestBookedTicketId} not found in database");
+                return new ServiceResponse<List<UpdatedBookedTicketModel>>
+                {
+                    Title = "BookedTicketId not found",
+                    Status = 422,
+                    Detail = $"BookedTicketId of: {RequestBookedTicketId} does not exist in database"
+                };
+                //throw new ArgumentException($"BookedTicketId of: {RequestBookedTicketId} not found in database");
             }
 
             //look for bookedticket with the same TicketCode
@@ -173,11 +213,23 @@ namespace exam1.services
             //validate null and quantity in ticket
             if (ticketData == null)
             {
-                throw new ArgumentException($"TicketCode of: {RequestTicketCode} not found in database");
+                return new ServiceResponse<List<UpdatedBookedTicketModel>>
+                {
+                    Title = "TicketCode not found",
+                    Status = 422,
+                    Detail = $"TicketCode of: {RequestTicketCode} does not exist in database"
+                };
+                //throw new ArgumentException($"TicketCode of: {RequestTicketCode} not found in database");
             }
             if (ticketData.Quantity < RequestQuantity)
             {
-                throw new ArgumentException($"Quantity of: {RequestQuantity} over quantity of booked ticket in database");
+                return new ServiceResponse<List<UpdatedBookedTicketModel>>
+                {
+                    Title = "Wrong RequestQuantity value",
+                    Status = 403,
+                    Detail = $"Provided quantity of: {RequestQuantity} is over the quantity of previously booked ticket in database, which is {ticketData.Quantity}"
+                };
+                //throw new ArgumentException($"Quantity of: {RequestQuantity} over quantity of booked ticket in database");
             }
 
             //remove entry if remaining quantity is 0
@@ -222,10 +274,13 @@ namespace exam1.services
                 CategoryName = res.CategoryName
             }).ToList();
 
-            return finalResult;
+            return new ServiceResponse<List<UpdatedBookedTicketModel>>
+            {
+                Data = finalResult
+            };
         }
 
-        public async Task<List<UpdatedBookedTicketModel>> UpdateBookedTicketDetails(List<UpdateBookedTicketRequestModel> request, int RequestBookedTicketId)
+        public async Task<ServiceResponse<List<UpdatedBookedTicketModel>>> UpdateBookedTicketDetails(List<UpdateBookedTicketRequestModel> request, int RequestBookedTicketId)
         {
             var existingData = await _db.BookedTicketDetails
                 .Where(Q => Q.BookedTicketDetailId == RequestBookedTicketId)
@@ -233,7 +288,13 @@ namespace exam1.services
 
             if (!existingData.Any())
             {
-                throw new ArgumentException($"BookedTicketId of: {RequestBookedTicketId} not found in database");
+                return new ServiceResponse<List<UpdatedBookedTicketModel>>
+                {
+                    Title = "BookedTicketId not found",
+                    Status = 422,
+                    Detail = $"BookedTicketId of: {RequestBookedTicketId} does not exist in database"
+                };
+                //throw new ArgumentException($"BookedTicketId of: {RequestBookedTicketId} not found in database");
             }
 
             //validate 
@@ -246,7 +307,13 @@ namespace exam1.services
 
                 if(ticketData == null)
                 {
-                    throw new ArgumentException($"TicketCode of: {item.TicketCode} not found in database");
+                    return new ServiceResponse<List<UpdatedBookedTicketModel>>
+                    {
+                        Title = "TicketCode not found",
+                        Status = 422,
+                        Detail = $"TicketCode of: {item.TicketCode} does not exist in database"
+                    };
+                    //throw new ArgumentException($"TicketCode of: {item.TicketCode} not found in database");
                 }
 
                 //validate quantity against available quota 
@@ -261,7 +328,13 @@ namespace exam1.services
 
                 if (item.Quantity < 1 ||  item.Quantity > existingAvailableTicketsEntry.Quantity)
                 {
-                    throw new ArgumentException($"Quantity of: {item.Quantity} over quota in database or is less than 1");
+                    return new ServiceResponse<List<UpdatedBookedTicketModel>>
+                    {
+                        Title = "Wrong requested quantity value",
+                        Status = 403,
+                        Detail = $"Provided quantity of: {item.Quantity} may be less than 1, or is over the quantity available quota in database, which is {existingAvailableTicketsEntry.Quantity}"
+                    };
+                    //throw new ArgumentException($"Quantity of: {item.Quantity} over quota in database or is less than 1");
                 }
             }
 
@@ -312,7 +385,10 @@ namespace exam1.services
                 CategoryName = res.CategoryName
             }).ToList();
 
-            return finalResult;
+            return new ServiceResponse<List<UpdatedBookedTicketModel>>
+            {
+                Data = finalResult
+            };
         }
 
 

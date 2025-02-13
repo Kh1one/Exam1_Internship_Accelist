@@ -12,24 +12,24 @@ namespace exam1.Controllers
     public class AvailableTicketController : ControllerBase
     {
         private readonly AvailableTicketService _services;
-        private readonly ILogger<AvailableTicketController> _logger;
-        public AvailableTicketController(AvailableTicketService services, ILogger<AvailableTicketController> logger)
+        public AvailableTicketController(AvailableTicketService services)
         {
             _services = services;
-            _logger = logger;
         }
-
-
 
         // GET: api/<AvailableTicketController>
         [HttpGet]
         public async Task<IActionResult> GetData([FromQuery] AvailableTicketRequestModel request)
         {
-            _logger.LogInformation("Start of method test");
-
             var data = await _services.GetAvailableTicketData(request);
 
-            return Ok(data);
+            if (data.Status != 0)
+            {
+                data.Instance = HttpContext.Request.Path;
+                return Ok(data);
+            }
+
+            return Ok(data.Data);
 
         }
     }

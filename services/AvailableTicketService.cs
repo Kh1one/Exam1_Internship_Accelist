@@ -14,7 +14,7 @@ namespace exam1.services
             _db = db;
         }
 
-        public async Task<List<AvailableTicketResponseModel>> GetAvailableTicketData(AvailableTicketRequestModel request)
+        public async Task<ServiceResponse<List<AvailableTicketResponseModel>>> GetAvailableTicketData(AvailableTicketRequestModel request)
         {
             //create query & join
             var query = _db.AvailableTickets
@@ -24,6 +24,8 @@ namespace exam1.services
                 ct => ct.CategoryId,
                 (at, ct) => new { at, ct }
             );
+
+            query = query.Where(joined => joined.at.Quota >= 1);
 
             //filter
             if (request.TicketCode != string.Empty)
@@ -51,9 +53,11 @@ namespace exam1.services
                 query = query.Where(joined => joined.at.EventDate <= request.MaxEventDate);
             }
 
+
+            //order by and order state
             if (request.OrderBy != string.Empty)
             {
-                if(request.OrderState == string.Empty || request.OrderState.ToLower() == "ascending")
+                if (request.OrderState == string.Empty || request.OrderState.ToLower() == "ascending")
                 {
                     switch (request.OrderBy)
                     {
@@ -82,12 +86,18 @@ namespace exam1.services
                             break;
 
                         default:
-                            throw new ArgumentException($"Invalid OrderBy value: {request.OrderBy}. " +
-                                $"Allowed values are 'EventDate', 'Quota', 'TicketCode', 'TicketName', 'CategoryName', or 'Price'.");
 
+                            return new ServiceResponse<List<AvailableTicketResponseModel>>
+                            {
+                                //Success = false,
+                                Title = "Invalid OrderBy value",
+                                Status = 422,
+                                Detail = $"OrderBy value of '{request.OrderBy}' is invalid, allowed values are " +
+                                "'EventDate', 'Quota', 'TicketCode', 'TicketName', 'CategoryName', or 'Price'."
+                            };
                     }
                 }
-                else if(request.OrderState.ToLower() == "descending")
+                else if (request.OrderState.ToLower() == "descending")
                 {
                     switch (request.OrderBy)
                     {
@@ -116,30 +126,73 @@ namespace exam1.services
                             break;
 
                         default:
-                            throw new ArgumentException($"Invalid OrderBy value: {request.OrderBy}. " +
-                                $"Allowed values are 'EventDate', 'Quota', 'TicketCode', 'TicketName', 'CategoryName', or 'Price'.");
+                            return new ServiceResponse<List<AvailableTicketResponseModel>>
+                            {
+                                //Success = false,
+                                Title = "Invalid OrderBy value",
+                                Status = 422,
+                                Detail = $"OrderBy value of '{request.OrderBy}' is invalid, allowed values are " +
+                                        "'EventDate', 'Quota', 'TicketCode', 'TicketName', 'CategoryName', or 'Price'."
+                            };
+                            //throw new ArgumentException($"Invalid OrderBy value: {request.OrderBy}. " +
+                            //    $"Allowed values are 'EventDate', 'Quota', 'TicketCode', 'TicketName', 'CategoryName', or 'Price'.");
 
                     }
                 }
                 else
                 {
-                    throw new ArgumentException($"Invalid OrderState value: {request.OrderState}. " +
-                               $"Allowed values are 'Ascending' or 'Descending'.");
+                    return new ServiceResponse<List<AvailableTicketResponseModel>>
+                    {
+                        //Success = false,
+                        Title = "Invalid OrderState value",
+                        Status = 422,
+                        Detail = $"OrderState value of '{request.OrderState}' is invalid, allowed values are " +
+                                 "'Ascending' or 'Descending'."
+                    };
                 }
             }
 
+            if (request.OrderBy == string.Empty)
+            {
+                if (request.OrderState.ToLower() == "ascending" || request.OrderState == string.Empty){
+                    query = query.OrderBy(joined => joined.at.TicketCode);
+                }
+                else if (request.OrderState.ToLower() == "descending")
+                {
+                    query = query.OrderByDescending(joined => joined.at.TicketCode);
+                }
+                else
+                {
+                    return new ServiceResponse<List<AvailableTicketResponseModel>>
+                    {
+                        //Success = false,
+                        Title = "Invalid OrderState value",
+                        Status = 422,
+                        Detail = $"OrderState value of '{request.OrderState}' is invalid, allowed values are " +
+                                 "'Ascending' or 'Descending'."
+                    };
+                }
 
-                //get data
-                var data = await query.Select(Q => new AvailableTicketResponseModel{
-                    EventDate = Q.at.EventDate.ToString("yyyy-MM-dd HH:mm:ss"),
-                    TicketCode = Q.at.TicketCode,
-                    TicketName = Q.at.TicketName,
-                    Quota = Q.at.Quota,
-                    Price = Q.at.Price,
-                    CategoryName = Q.ct.CategoryName
-                }).ToListAsync();
+            }
+            
+            
 
-            return data;
+            //get data
+            var data = await query.Select(Q => new AvailableTicketResponseModel {
+                EventDate = Q.at.EventDate.ToString("yyyy-MM-dd HH:mm:ss"),
+                TicketCode = Q.at.TicketCode,
+                TicketName = Q.at.TicketName,
+                Quota = Q.at.Quota,
+                Price = Q.at.Price,
+                CategoryName = Q.ct.CategoryName
+            }).ToListAsync();
+
+
+            return new ServiceResponse<List<AvailableTicketResponseModel>>
+            {
+                Data = data
+            };
+
         }
     }
 }
