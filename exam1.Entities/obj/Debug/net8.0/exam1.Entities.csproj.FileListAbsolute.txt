@@ -1,0 +1,14 @@
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\bin\Debug\net8.0\exam1.Entities.deps.json
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\bin\Debug\net8.0\exam1.Entities.runtimeconfig.json
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\bin\Debug\net8.0\exam1.Entities.dll
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\bin\Debug\net8.0\exam1.Entities.pdb
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.csproj.AssemblyReference.cache
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.AssemblyInfoInputs.cache
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.AssemblyInfo.cs
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.csproj.CoreCompileInputs.cache
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.dll
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\refint\exam1.Entities.dll
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.pdb
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\exam1.Entities.genruntimeconfig.cache
+C:\Users\Kezia123\Documents\aakodingan\visual studio\exam1.Entities\obj\Debug\net8.0\ref\exam1.Entities.dll
